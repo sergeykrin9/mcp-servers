@@ -1,6 +1,22 @@
-# MCP Servers · marketing & ops toolkit for AI agents
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:1a1a1d,50:c08a52,100:1a1a1d&height=200&section=header&text=MCP%20Servers&fontSize=52&fontColor=f5f1e8&fontAlignY=38&desc=Russian-market%20marketing%20%26%20ops%20toolkit%20for%20Claude%20%2F%20Cursor%20%2F%20Windsurf&descSize=14&descAlignY=62" alt="MCP Servers" />
 
-> A collection of **7 custom Model Context Protocol (MCP) servers** that wire marketing platforms into LLM-agent loops. Built so an agent (Claude Code, Claude Desktop, etc.) can run ad campaigns, read analytics, publish posts, and check SEO health directly — without humans clicking buttons.
+<div align="center">
+
+<p>
+  <a href="https://github.com/SergeyKrin9/mcp-servers/stargazers"><img src="https://img.shields.io/github/stars/SergeyKrin9/mcp-servers?style=for-the-badge&color=c08a52&logo=github&labelColor=1a1a1d"></a>
+  <a href="https://github.com/SergeyKrin9/mcp-servers/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-c08a52?style=for-the-badge&labelColor=1a1a1d"></a>
+  <img src="https://img.shields.io/badge/Python-3.10%2B-c08a52?style=for-the-badge&logo=python&logoColor=white&labelColor=1a1a1d">
+  <img src="https://img.shields.io/badge/MCP-protocol-FF6B35?style=for-the-badge&logo=anthropic&logoColor=white&labelColor=1a1a1d">
+</p>
+
+<sub>🐍 Python · 🇷🇺 Russian market · 🎖️ The only unified RU-platform MCP bundle · 🤖 7 servers</sub>
+
+</div>
+
+> [!IMPORTANT]
+> **The only unified MCP toolkit for Russian-market platforms.** Yandex.Direct, Yandex.Webmaster, Yandex.Metrika (via energyboost), Google Search Console, YouTube, VK, Telegram, Click.ru. No equivalent exists in `awesome-mcp-servers`. If you do SEO/SMM/PPC for a Russian audience and use Claude — this is your missing kit.
+
+A collection of **7 custom Model Context Protocol (MCP) servers** that wire marketing platforms into LLM-agent loops. Built so an agent (Claude Code, Claude Desktop, Cursor, Windsurf) can run ad campaigns, read analytics, publish posts, and check SEO health directly — without humans clicking buttons.
 
 If you don't know what MCP is, [start here](https://modelcontextprotocol.io/) — it's Anthropic's open protocol for plugging tools into LLM apps.
 
@@ -33,30 +49,63 @@ A typical workflow an LLM-agent can now run unattended:
 
 All without a marketer touching the console.
 
-## Setup
+## ⚡ Quickstart (3 steps)
 
-Each server is a standalone Python process. Common pattern:
+**1. Clone & install:**
 
 ```bash
-cd <server>/
-pip install -r requirements.txt   # if present
-cp .env.example .env              # fill in your credentials
-python3 server.py
+git clone https://github.com/SergeyKrin9/mcp-servers.git
+cd mcp-servers/yadirect            # or any other server
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt    # if present
+cp .env.example .env               # fill in your credentials
 ```
 
-For Claude Desktop / Claude Code, add to your MCP config (`~/.config/claude/mcp.json` or project `.mcp.json`):
+**2. Wire into your AI host:**
+
+<details>
+<summary><strong>Claude Desktop / Claude Code</strong> (<code>~/Library/Application Support/Claude/claude_desktop_config.json</code>)</summary>
 
 ```json
 {
   "mcpServers": {
-    "yadirect": {
-      "command": "python3",
-      "args": ["/path/to/mcp-servers/yadirect/server.py"],
-      "env": { "YANDEX_DIRECT_TOKEN": "..." }
+    "yandex-direct": {
+      "command": "/abs/path/to/mcp-servers/yadirect/.venv/bin/python3",
+      "args": ["/abs/path/to/mcp-servers/yadirect/server.py"],
+      "env": { "YANDEX_DIRECT_TOKEN": "your-token" }
     }
   }
 }
 ```
+</details>
+
+<details>
+<summary><strong>Cursor</strong> (<code>~/.cursor/mcp.json</code>) — same JSON shape</summary>
+
+```json
+{
+  "mcpServers": {
+    "vk": {
+      "command": "/abs/path/to/.venv/bin/python3",
+      "args": ["/abs/path/to/mcp-servers/vk/server.py"],
+      "env": { "VK_TOKEN": "your-token", "VK_GROUP_ID": "123456" }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><strong>Windsurf</strong> (Settings → MCP Servers → Add) — same JSON shape</summary>
+
+Identical config — Windsurf uses the same MCP server format.
+</details>
+
+**3. Test the loop.** Open a fresh Claude chat and ask:
+
+> *"Show me the top 5 search queries for edaru.su from Google Search Console for the last 7 days, then check the same in Yandex.Webmaster, then queue new keywords matching the gaps to my Yandex.Direct campaign."*
+
+If everything's wired right, Claude will run `gsc.get_top_queries → yandex-webmaster.get_top_queries → yadirect.add_keywords` in one tool loop — without you opening a single dashboard.
 
 ## Credentials needed
 
@@ -86,4 +135,24 @@ For Claude Desktop / Claude Code, add to your MCP config (`~/.config/claude/mcp.
 
 ---
 
-**Author:** Sergey Krinitsyn · [putksebe.su/cv](https://putksebe.su/cv) · sergeykrin98@gmail.com
+## ⭐ Star history
+
+<a href="https://www.star-history.com/#SergeyKrin9/mcp-servers&Date">
+  <img src="https://api.star-history.com/svg?repos=SergeyKrin9/mcp-servers&type=Date" alt="Star History" />
+</a>
+
+## 📚 Related work
+
+- **[agnis-workflow](https://github.com/SergeyKrin9/agnis-workflow)** — the methodology that uses these MCP servers as first-class tools
+- **[broker-reels](https://github.com/SergeyKrin9/broker-reels)** — production application: AI text-to-video for real estate marketing
+- **[awesome-mcp-servers](https://github.com/punkpeye/awesome-mcp-servers)** — the canonical MCP catalog (no Russian-market entries yet — PR welcome)
+
+---
+
+<div align="center">
+
+**Author:** [Sergey Krinitsyn](https://putksebe.su/cv) · sergeykrin98@gmail.com · [GitHub](https://github.com/SergeyKrin9)
+
+<sub>If you ship to a Russian audience and use Claude — drop a ⭐. It tells me to keep adding servers.</sub>
+
+</div>
