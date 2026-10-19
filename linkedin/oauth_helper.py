@@ -77,7 +77,7 @@ class CallbackHandler(http.server.BaseHTTPRequestHandler):
         if state != STATE:
             self.send_response(400)
             self.end_headers()
-            self.wfile.write(b"State mismatch — possible CSRF. Restart the script.")
+            self.wfile.write("State mismatch — possible CSRF. Restart the script.".encode("utf-8"))
             return
 
         received_code = params.get("code", [None])[0]
@@ -92,7 +92,7 @@ class CallbackHandler(http.server.BaseHTTPRequestHandler):
         self.send_header("Content-Type", "text/html")
         self.end_headers()
         self.wfile.write(
-            b"<h1>Authorized</h1><p>Return to your terminal — the token is being printed.</p>"
+            "<h1>Authorized</h1><p>Return to your terminal — the token is being printed.</p>".encode("utf-8")
         )
 
 

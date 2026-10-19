@@ -4,19 +4,18 @@
 
 <p>
   <a href="https://github.com/SergeyKrin9/mcp-servers/stargazers"><img src="https://img.shields.io/github/stars/SergeyKrin9/mcp-servers?style=for-the-badge&color=c08a52&logo=github&labelColor=1a1a1d"></a>
-  <a href="https://github.com/SergeyKrin9/mcp-servers/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-c08a52?style=for-the-badge&labelColor=1a1a1d"></a>
   <img src="https://img.shields.io/badge/Python-3.10%2B-c08a52?style=for-the-badge&logo=python&logoColor=white&labelColor=1a1a1d">
   <img src="https://img.shields.io/badge/MCP-protocol-FF6B35?style=for-the-badge&logo=anthropic&logoColor=white&labelColor=1a1a1d">
 </p>
 
-<sub>🐍 Python · 🇷🇺 Russian market · 🎖️ The only unified RU-platform MCP bundle · 🤖 7 servers</sub>
+<sub>🐍 Python · 🇷🇺 Russian market · 🤖 8 server directories</sub>
 
 </div>
 
 > [!IMPORTANT]
-> **The only unified MCP toolkit for Russian-market platforms.** Yandex.Direct, Yandex.Webmaster, Yandex.Metrika (via energyboost), Google Search Console, YouTube, VK, Telegram, Click.ru. No equivalent exists in `awesome-mcp-servers`. If you do SEO/SMM/PPC for a Russian audience and use Claude — this is your missing kit.
+> Integrations for advertising, search analytics, and social publishing. Each server requires its own platform setup and permissions.
 
-A collection of **7 custom Model Context Protocol (MCP) servers** that wire marketing platforms into LLM-agent loops. Built so an agent (Claude Code, Claude Desktop, Cursor, Windsurf) can run ad campaigns, read analytics, publish posts, and check SEO health directly — without humans clicking buttons.
+A collection of **8 custom Model Context Protocol (MCP) server directories** that wire marketing platforms into LLM-agent loops. Built so an agent (Claude Code, Claude Desktop, Cursor, Windsurf) can run ad campaigns, read analytics, publish posts, and check SEO health directly — without humans clicking buttons.
 
 If you don't know what MCP is, [start here](https://modelcontextprotocol.io/) — it's Anthropic's open protocol for plugging tools into LLM apps.
 
@@ -24,6 +23,7 @@ If you don't know what MCP is, [start here](https://modelcontextprotocol.io/) �
 
 | Server | What it exposes to the agent |
 |---|---|
+| [`linkedin/`](./linkedin/) | LinkedIn profile and publishing tools; see its own README |
 | [`clickru/`](./clickru/) | Click.ru API — Telegram Ads, VK Ads, Yandex.Direct campaigns, balances, reports, bid manager |
 | [`yadirect/`](./yadirect/) | Yandex.Direct — create/pause campaigns, manage keywords, bids, ad copy |
 | [`yandex-webmaster/`](./yandex-webmaster/) | Yandex.Webmaster — indexing, top queries, sitemap, recrawl, problem detection |
@@ -38,16 +38,7 @@ Together they cover the **full growth stack** for a typical Russian-market produ
 
 In 2026 the bottleneck of growth isn't "what to do" — agents can plan. It's the **glue between AI plans and platform APIs**. These servers are that glue.
 
-A typical workflow an LLM-agent can now run unattended:
-
-1. `gsc.get_top_queries('edaru.su')` → see which keywords are climbing
-2. `yandex-webmaster.get_top_queries('edaru.su')` → cross-check on Yandex
-3. `yadirect.get_keywords('campaign_id=...')` → see which keywords we already bid on
-4. Decide on new keywords to add → `yadirect.add_negative_keywords(...)`, adjust bids
-5. `vk.post_to_wall(...)` and `edaru-telegram.publish_post(...)` to push fresh content
-6. Next day: `clickru.get_campaign_stats(...)` to see what worked
-
-All without a marketer touching the console.
+Start by listing the selected server’s tools. Review their parameters before using real accounts: several tools create campaigns or publish content.
 
 ## ⚡ Quickstart (3 steps)
 
@@ -58,7 +49,8 @@ git clone https://github.com/SergeyKrin9/mcp-servers.git
 cd mcp-servers/yadirect            # or any other server
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt    # if present
-cp .env.example .env               # fill in your credentials
+# yadirect reads YANDEX_DIRECT_TOKEN from the process environment.
+# Configure it in your host; no .env.example or dotenv loader is provided here.
 ```
 
 **2. Wire into your AI host:**
@@ -101,16 +93,13 @@ cp .env.example .env               # fill in your credentials
 Identical config — Windsurf uses the same MCP server format.
 </details>
 
-**3. Test the loop.** Open a fresh Claude chat and ask:
-
-> *"Show me the top 5 search queries for edaru.su from Google Search Console for the last 7 days, then check the same in Yandex.Webmaster, then queue new keywords matching the gaps to my Yandex.Direct campaign."*
-
-If everything's wired right, Claude will run `gsc.get_top_queries → yandex-webmaster.get_top_queries → yadirect.add_keywords` in one tool loop — without you opening a single dashboard.
+**3. Check tool discovery.** Ask your host to list the configured server’s tools without invoking them. This checks MCP registration without making advertising or publishing requests. API integration checks require a separate test account and are not covered by this step.
 
 ## Credentials needed
 
 | Server | What to get |
 |---|---|
+| `linkedin` | LinkedIn access token; see `linkedin/README.md` |
 | `clickru` | Click.ru API key + account ID (in the Click.ru dashboard) |
 | `yadirect` | Yandex.Direct OAuth token via [oauth.yandex.ru](https://oauth.yandex.ru) |
 | `yandex-webmaster` | Same OAuth flow as Direct, with `webmaster:hostinfo,webmaster:verify` scopes |
@@ -120,6 +109,20 @@ If everything's wired right, Claude will run `gsc.get_top_queries → yandex-web
 | `edaru-telegram` | Telegram bot token (BotFather) + chat ID |
 
 `yandex-webmaster/oauth_helper.py` includes a working OAuth flow if you want to grab tokens locally.
+
+## GSC configuration migration
+
+The GSC server no longer falls back to a machine-specific credential path. Set `GSC_SERVICE_ACCOUNT_KEY` in the environment of the MCP server process to the absolute path of **your existing** service-account JSON file:
+
+```json
+{
+  "env": {
+    "GSC_SERVICE_ACCOUNT_KEY": "/absolute/path/to/your-existing-service-account.json"
+  }
+}
+```
+
+Merge this `env` entry into your existing GSC server configuration and restart that server. Replace the placeholder with your own local path; do not paste the JSON file contents into the configuration or commit them. This change creates no credentials and grants no new permissions. The existing service account must already have access to the Search Console property. If the variable is missing, the server reports a configuration error when a GSC tool is called.
 
 ## Tech stack
 
@@ -144,14 +147,14 @@ If everything's wired right, Claude will run `gsc.get_top_queries → yandex-web
 ## 📚 Related work
 
 - **[agnis-workflow](https://github.com/SergeyKrin9/agnis-workflow)** — the methodology that uses these MCP servers as first-class tools
-- **[broker-reels](https://github.com/SergeyKrin9/broker-reels)** — production application: AI text-to-video for real estate marketing
-- **[awesome-mcp-servers](https://github.com/punkpeye/awesome-mcp-servers)** — the canonical MCP catalog (no Russian-market entries yet — PR welcome)
+- **[broker-reels](https://github.com/SergeyKrin9/broker-reels)** — Python pipeline for real estate videos, with an offline demo
+- **[awesome-mcp-servers](https://github.com/punkpeye/awesome-mcp-servers)** — the canonical MCP catalog
 
 ---
 
 <div align="center">
 
-**Author:** [Sergey Krinitsyn](https://putksebe.su/cv) · sergeykrin98@gmail.com · [GitHub](https://github.com/SergeyKrin9)
+**Author:** [Sergei Grin](https://putksebe.su/cv) · sergeykrin98@gmail.com · [GitHub](https://github.com/SergeyKrin9)
 
 <sub>If you ship to a Russian audience and use Claude — drop a ⭐. It tells me to keep adding servers.</sub>
 

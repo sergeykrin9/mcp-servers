@@ -16,15 +16,13 @@ from mcp.server.fastmcp import FastMCP
 ROOT = Path(__file__).resolve().parent
 load_dotenv(ROOT / ".env")
 
-DEFAULT_KEY_PATH = (
-    "/Users/sergeykrin/Downloads/telegram-bot/signalleads-landing/"
-    "axonleads-app-firebase-adminsdk-fbsvc-839a24dd4d.json"
-)
-KEY_PATH = os.getenv("GSC_SERVICE_ACCOUNT_KEY", DEFAULT_KEY_PATH)
+KEY_PATH = os.getenv("GSC_SERVICE_ACCOUNT_KEY", "")
 SCOPES = ["https://www.googleapis.com/auth/webmasters.readonly"]
 
 
 def _service():
+    if not KEY_PATH:
+        raise RuntimeError("Set GSC_SERVICE_ACCOUNT_KEY to your service account JSON path")
     creds = service_account.Credentials.from_service_account_file(
         KEY_PATH, scopes=SCOPES
     )
@@ -32,7 +30,7 @@ def _service():
 
 
 def _normalize_site(site: str) -> str:
-    """Accept 'edaru.su' or 'https://edaru.su/' — normalize to GSC siteUrl format."""
+    """Accept 'example.com' or 'https://example.com/' — normalize to GSC siteUrl format."""
     if site.startswith("http"):
         if not site.endswith("/"):
             site += "/"
@@ -45,7 +43,7 @@ mcp = FastMCP(
     instructions=(
         "Google Search Console API. Use list_sites() to see all sites. "
         "Then get_top_queries / get_top_pages / query_position for specifics. "
-        "Pass site as 'edaru.su' (auto-normalized to https://edaru.su/) or full siteUrl."
+        "Pass site as 'example.com' (auto-normalized to https://example.com/) or full siteUrl."
     ),
     json_response=True,
 )
