@@ -73,25 +73,32 @@ def _call_api(service: str, method: str, params: dict[str, Any]) -> dict:
 def _request_report(report_definition: dict, return_money_in_micros: bool = False) -> str:
     """
     Request a report from Yandex Direct Reports service.
-    Handles polling for REPORT_PENDING (202) status.
+    Polls queued (201) and pending (202) reports until ready (200).
     Returns the TSV report body as a string.
     """
     body = {"params": report_definition}
     headers = _report_headers(return_money_in_micros)
 
     with httpx.Client(timeout=120) as client:
-        for _ in range(30):  # max 30 retries
+        for attempt in range(30):
             resp = client.post(REPORTS_URL, headers=headers, json=body)
 
             if resp.status_code == 200:
-                # Report is ready (offline reports)
+                # Validate the column header, including header-only empty reports.
+                actual_fields = resp.text.splitlines()[0].split("\t") if resp.text else []
+                expected_fields = report_definition.get("FieldNames", [])
+                if expected_fields and (len(actual_fields) != len(expected_fields) or
+                                        set(actual_fields) != set(expected_fields)):
+                    raise RuntimeError("Report response has an unexpected TSV header")
                 return resp.text
-            elif resp.status_code == 201:
-                # Report created and ready immediately
-                return resp.text
-            elif resp.status_code == 202:
-                # Report is being generated, wait and retry
-                retry_in = int(resp.headers.get("retryIn", 5))
+            elif resp.status_code in (201, 202):
+                # 201 means queued, not ready; 202 means still being generated.
+                if attempt == 29:
+                    break
+                try:
+                    retry_in = max(0, int(resp.headers.get("retryIn", 5)))
+                except (TypeError, ValueError):
+                    retry_in = 5
                 time.sleep(retry_in)
                 continue
             else:
@@ -143,6 +150,7 @@ def get_campaign_stats(campaign_id: int, days: int = 7) -> str:
     """
     Get campaign statistics for the last N days.
     Returns Impressions, Clicks, Cost, Conversions, CPA per day.
+    Monetary values are in the account currency, including VAT, not micros.
 
     Args:
         campaign_id: The campaign ID to get stats for.
@@ -167,7 +175,7 @@ def get_campaign_stats(campaign_id: int, days: int = 7) -> str:
         "IncludeVAT": "YES",
     }
 
-    tsv = _request_report(report_def, return_money_in_micros=True)
+    tsv = _request_report(report_def, return_money_in_micros=False)
     rows = _parse_tsv(tsv)
     return json.dumps(rows, ensure_ascii=False, indent=2)
 
@@ -411,6 +419,7 @@ def get_search_queries(campaign_id: int, days: int = 7) -> str:
     """
     Get search query performance report for a campaign.
     Shows actual search queries that triggered ads, with clicks, cost, and conversions.
+    Monetary values are in the account currency, including VAT, not micros.
 
     Args:
         campaign_id: Campaign ID.
@@ -443,7 +452,7 @@ def get_search_queries(campaign_id: int, days: int = 7) -> str:
         "IncludeVAT": "YES",
     }
 
-    tsv = _request_report(report_def, return_money_in_micros=True)
+    tsv = _request_report(report_def, return_money_in_micros=False)
     rows = _parse_tsv(tsv)
 
     # Sort by clicks descending for convenience
@@ -457,6 +466,7 @@ def get_daily_report(campaign_id: int, days: int = 30) -> str:
     """
     Get detailed daily statistics report for a campaign.
     Includes impressions, clicks, CTR, cost, avg CPC, conversions, and CPA per day.
+    Monetary values are in the account currency, including VAT, not micros.
 
     Args:
         campaign_id: Campaign ID.
@@ -493,7 +503,7 @@ def get_daily_report(campaign_id: int, days: int = 30) -> str:
         "IncludeVAT": "YES",
     }
 
-    tsv = _request_report(report_def, return_money_in_micros=True)
+    tsv = _request_report(report_def, return_money_in_micros=False)
     rows = _parse_tsv(tsv)
     return json.dumps(rows, ensure_ascii=False, indent=2)
 
